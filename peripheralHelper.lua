@@ -23,4 +23,4 @@ function getRelays()
     return wrapped
 end
 
-return {wrapped = wrapped}
+return {getRelays = getRelays}

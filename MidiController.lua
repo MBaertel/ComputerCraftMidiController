@@ -97,4 +97,6 @@ function MidiController:play()
     end
 end
 
+return { MidiController = MidiController}
+
 
