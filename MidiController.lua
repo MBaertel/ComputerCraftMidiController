@@ -49,19 +49,28 @@ function MidiController:addEvent(midiEvent)
 end
 
 function MidiController:addTrack(midiTrack)
-    for _,event in ipairs(midi) do
+    local absTime = 0
+    for _,event in ipairs(midiTrack) do
+        if event.delta then
+            absTime = absTime + event.delta
+        elseif event.time then
+            absTime = event.time
+        else
+            error("Event must have time or delta")
+        end
+
         local midiEvent = MidiEvent:new(
-            event["type"],
-            event["channel"],
-            event["note"],
-            event["time"])
+            event.type,
+            event.channel,
+            event.note,
+            absTime)
         self:addEvent(midiEvent)
     end
 end
 
 function MidiController:play()
     local max_tick = 0
-    for tick,_ in ipairs(self.events) do
+    for tick,_ in pairs(self.events) do
         if tick > max_tick then max_tick = tick end
     end
 
@@ -71,6 +80,10 @@ function MidiController:play()
         local tick_events = self.events[tick] or {}
         for _,e in ipairs(tick_events) do
             local instrument = self.instruments[e.channel]
+            if not instrument then
+                goto continue
+            end
+
             if e.type == "note_on" then
                 instrument:play(e.note)
             end
@@ -78,6 +91,7 @@ function MidiController:play()
             if e.type == "note_off" then
                 instrument:stop(e.note)
             end
+            ::continue::
         end
         sleep(tick_duration)
     end

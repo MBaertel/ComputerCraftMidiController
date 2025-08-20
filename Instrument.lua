@@ -1,89 +1,47 @@
-NotePlayer = {}
-NotePlayer.__index = NotePlayer
+Note= {}
+Note.__index = Note
 
-function NotePlayer:new(name,peripheral)
-    local self = setmetatable({},NotePlayer)
+function Note:new(name,peripheral)
+    local self = setmetatable({},Note)
     self.name = name
     self.relay = peripheral
     return self
 end
 
-function NotePlayer:play()
+function Note:play()
     self.relay.setOutput("front",true)
 end
 
-function NotePlayer:stop()
+function Note:stop()
     self.relay.setOutput("front",false)
 end
 
-Organ = {}
-Organ.__index = Organ
+Instrument = {}
+Instrument.__index = Instrument
 
-function Organ:new(name,peripherals)
-    local self = setmetatable({},Organ)
+function Instrument:new(name,peripherals)
+    local self = setmetatable({},Instrument)
     self.name = name
-    self.steps = {}
-    self.currentStep = 0
-    self.stepDuration = 0.5
+    self.notes = {}
 
-    local baseNotes = {"F#","G","G#","A","A#","B","C","C#","D","D#","E","F","F#"}
-    self.notePlayers = {}
+    local notesCount = 0
+    for _ in pairs(peripherals) do
+        notesCount = notesCount + 1
+    end
 
-    local i = 0
-    for octave = 1,3 do
-        for _,note in ipairs(baseNotes) do
-            local noteName = note .. octave
-            local relay = peripherals[i]
-            local notePlayer = NotePlayer:new(note .. octave,relay)
-            self.notePlayers[noteName] = notePlayer
-            i = i + 1
-        end
+    for note = 0,127 do
+        local idx = math.floor(note* notesCount / 128) + 1
+        local notePlayer = Note:new(note + 1,peripherals[idx])
+        table.insert(self.notes,notePlayer)
     end
     return self
 end
 
-function Organ:add(noteName,duration)
-    for i = self.currentStep, self.currentStep + duration - 1 do
-        if not self.steps[i] then
-            self.steps[i] = {}
-        end
-        table.insert(self.steps[i],noteName)
-    end
-    return self
+function Instrument:play(note)
+    self.notes[note]:play()
 end
 
-function Organ:step()
-    self.currentStep = self.currentStep + 1
-    return self
-end
-
-function Organ:setSpeed(duration)
-    self.stepDuration = duration
-    return self
-end
-
-function Organ:play()
-    local allNotes = {}
-    for _,notePlayer in pairs(self.notePlayers) do
-        table.insert(allNotes, notePlayer)
-    end
-
-    for stepIndex,stepNotes in ipairs(self.steps) do
-        for _,note in ipairs(allNotes) do
-            local playing = false
-            for _,n in ipairs(stepNotes) do
-                if n == note.name then
-                    playing = true
-                    break
-                end
-            end
-            if playing then
-                note.play(note)
-            else
-                note.stop(note)
-            end
-        end
-        sleep(self.stepDuration)
-    end
+function Instrument:stop(note)
+    self.notes[note]:stop()
 end
 
