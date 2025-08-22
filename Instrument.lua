@@ -9,18 +9,26 @@ function Note:new(name,peripheral)
 end
 
 function Note:play()
+    if !self.relay then
+        print("Note ".. self.name .. "not set")
+        return
+    end
     print("playing note " .. self.name)
     self.relay.setOutput("front",true)
 end
 
 function Note:stop()
+    if !self.relay then
+        print("Note ".. self.name .. "not set")
+        return
+    end
     self.relay.setOutput("front",false)
 end
 
 Instrument = {}
 Instrument.__index = Instrument
 
-function Instrument:new(name,peripherals)
+function Instrument:new(name,peripherals,skip)
     local self = setmetatable({},Instrument)
     self.name = name
     self.notes = {}
@@ -37,10 +45,29 @@ function Instrument:new(name,peripherals)
         notesCount = notesCount + 1
     end
 
-    for note = 0,127 do
-        local idx = math.floor(note* notesCount / 128) + 1
-        local notePlayer = self.notePlayers[idx]
-        table.insert(self.notes,notePlayer)
+    if not skip then
+        local skipCount = ((128-notesCount)/2)
+        print("No Skip Count passed, setting calculated center "..skipCount)
+    else
+        local skipCount = skip
+    end
+    local idx = 1
+    for note = 1,128 do
+        if note <= skipCount then
+            local notePlayer = Note:new(note)
+            table.insert(self.notes,notePlayer)
+            goto continue
+        end
+        if idx <= notesCount then
+            local notePlayer = self.notePlayers[idx]
+            notePlayer.name = note
+            table.insert(self.notes,notePlayer)
+            idx = idx + 1
+        else
+            local notePlayer = Note:new(note)
+            table.insert(self.notes,notePlayer)
+        end
+        ::continue::
     end
     return self
 end

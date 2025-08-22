@@ -23,7 +23,6 @@ MidiController.__index = MidiController
 function MidiController:new()
     local self = setmetatable({},MidiController)
     self.ticks_per_second = 24;
-    self.beats_per_minute = 120;
     self.events = {}
     self.instruments = {}
     return self;
@@ -37,10 +36,6 @@ function MidiController:setTickRate(ticks_per_second)
     self.ticks_per_second = ticks_per_second
 end
 
-function MidiController:setBeatsPerMinute(beats_per_minute)
-    self.beats_per_minute = beats_per_minute
-end
-
 function MidiController:addEvent(midiEvent)
     local tick = midiEvent.time
     self.events[tick] = self.events[tick] or {}
@@ -50,6 +45,7 @@ end
 
 function MidiController:addTrack(midiTrack)
     local absTime = 0
+    local note = 0
     for _,event in ipairs(midiTrack) do
         if event.delta then
             absTime = absTime + event.delta
@@ -57,6 +53,14 @@ function MidiController:addTrack(midiTrack)
             absTime = event.time
         else
             error("Event must have time or delta")
+        end
+
+        if event.note then
+            note = event.note
+        elseif event.midi
+            note = event.midi
+        else
+            error("Event must have note or midi")
         end
 
         local midiEvent = MidiEvent:new(
