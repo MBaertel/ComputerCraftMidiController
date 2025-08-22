@@ -9,7 +9,7 @@ function Note:new(name,peripheral)
 end
 
 function Note:play()
-    if !self.relay then
+    if not self.relay then
         print("Note ".. self.name .. "not set")
         return
     end
@@ -18,7 +18,7 @@ function Note:play()
 end
 
 function Note:stop()
-    if !self.relay then
+    if not self.relay then
         print("Note ".. self.name .. "not set")
         return
     end
@@ -45,11 +45,12 @@ function Instrument:new(name,peripherals,skip)
         notesCount = notesCount + 1
     end
 
+    local skipCount = 0
     if not skip then
-        local skipCount = ((128-notesCount)/2)
+        skipCount = ((128-notesCount)/2)
         print("No Skip Count passed, setting calculated center "..skipCount)
     else
-        local skipCount = skip
+        skipCount = skip
     end
     local idx = 1
     for note = 1,128 do
